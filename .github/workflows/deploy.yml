@@ -52,9 +52,9 @@ jobs:
     # Deploy the new task definition to ECS service
     - name: Deploy to Amazon ECS
       run: |
-        NEW_TASK_DEF_ARN=$(aws ecs describe-task-definition --task-definition task-test-1 --query 'taskDefinition.taskDefinitionArn' --output text)
+        NEW_TASK_DEF_ARN=$(aws ecs describe-task-definition --task-definition persocode-task-def --query 'taskDefinition.taskDefinitionArn' --output text)
         aws ecs update-service \
-          --cluster cluster-test-1 \
-          --service service-test-1 \
+          --cluster PersoCluster \
+          --service persocode-service \
           --task-definition $NEW_TASK_DEF_ARN \
           --force-new-deployment
