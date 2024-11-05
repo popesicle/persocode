@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  backend:
+    image: 'rtneust/persocode-backend:latest'
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+    networks:
+      - app-network
+
+  frontend:
+    image: 'rtneust/persocode-frontend:latest'
+    ports:
+      - "3001:5173"  # Map port 5173 in the container to 3001 on the host
+    environment:
+      NODE_ENV: production
+    command: npm run dev -- --port 5173 --host 0.0.0.0
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

@@ -1,0 +1,61 @@
+name: Deploy to ECS
+
+on:
+  push:
+    branches:
+      - main  # This will trigger the workflow only when code is pushed to the `main` branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the repository code
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Step 2: Log in to Docker Hub
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    # Step 3: Build and push the Docker image to Docker Hub
+    - name: Build and push Docker image
+      run: |
+        docker build -t persocode-backend:latest -f backend/Dockerfile backend/
+        docker build -t persocode-frontend:latest -f frontend/Dockerfile frontend/
+        docker tag persocode-backend:latest rtneust/persocode-backend:latest
+        docker tag persocode-frontend:latest rtneust/persocode-frontend:latest
+        docker push rtneust/persocode-backend:latest
+        docker push rtneust/persocode-frontend:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Configure AWS credentials for CLI access
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    # Step 2: Deploy to ECS
+    - name: Deploy to Amazon ECS
+      run: |
+        aws ecs update-service \
+          --cluster cluster-test-1 \
+          --service service-test-1 \
+          --force-new-deployment \
+          --task-definition $(aws ecs describe-task-definition \
+              --task-definition task-test-1 \
+              --query 'taskDefinition.taskDefinitionArn' \
+              --output text) \
+              --network-configuration "awsvpcConfiguration={subnets=[subnet-0da83275630176593,subnet-0e942e7f2ffccc953,subnet-0cbe78792e894e58d],securityGroups=[sg-04e29f0ee76e68b60,sg-0d8764fce74df36d6],assignPublicIp=ENABLED}"
+
+        # Optional: Confirm the deployment was successful
+        aws ecs describe-services --cluster cluster-test-1 --services service-test-1
