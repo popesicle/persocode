@@ -21,8 +21,8 @@ jobs:
 
     - name: Build and push Docker images
       run: |
-        docker build -t persocode-backend:latest -f backend/Dockerfile backend/
-        docker build -t persocode-frontend:latest -f frontend/Dockerfile frontend/
+        docker build -t persocode-backend:latest -f ../../backend/Dockerfile backend/
+        docker build -t persocode-frontend:latest -f ../../frontend/Dockerfile frontend/
         docker tag persocode-backend:latest rtneust/persocode-backend:latest
         docker tag persocode-frontend:latest rtneust/persocode-frontend:latest
         docker push rtneust/persocode-backend:latest
